@@ -1,5 +1,5 @@
-// This is about as simple as it gets. You would probably want to
-// use a framework (e.g. React) if you're building up a real app.
+// This is just using vanilla JS, if you're building a real app
+// you would probably want to use a framework (e.g. React).
 
 const box = document.getElementById('box');
 const form = document.getElementById('form');
@@ -9,24 +9,33 @@ const heartbeat = document.getElementById('heartbeat');
 const connected = document.getElementById('connected');
 const closeButton = document.getElementById('close-button');
 
-const ws = new WebSocket('ws://localhost:3000');
+// Make WebSocket connection to server. `window.location.hostname` will
+// work on both localhost or the IP address (for connecting a mobile device)
+const ws = new WebSocket(`ws://${window.location.hostname}:3000`);
 
+// Focus the message on page load
+input.focus();
+
+// Called when the connection opens
 ws.onopen = e => {
   closeButton.disabled = false;
   closeButton.onclick = () => ws.close();
 };
 
+// Called every time a message is received from the server
 ws.onmessage = message => {
-  const { type, self, text, clientId } = JSON.parse(message.data);
+  const { type, isSelf, text, clientId } = JSON.parse(message.data);
 
+  // This is one way to handle different types of messages. Socket.io
+  // provides an abstraction that allows you to avoid this.
   switch (type) {
     case 'message': {
       const bubble = document.createElement('div');
-      bubble.classList.add('bubble', self ? 'us' : 'them');
+      bubble.classList.add('bubble', isSelf ? 'us' : 'them');
       bubble.innerText = text;
       box.appendChild(bubble);
 
-      if (!self) {
+      if (!isSelf) {
         const info = document.createElement('p');
         info.classList.add('info');
         info.innerText = `SENT FROM USER ${clientId}`;
@@ -34,29 +43,31 @@ ws.onmessage = message => {
       }
       break;
     }
-    case 'heartbeat': {
-      // heartbeat.innerText = text;
-      console.log(text);
-      break;
-    }
-    case 'connected': {
+    case 'connection': {
       connected.innerText = 'CONNECTED!';
       break;
     }
     default:
-      return;
+      console.warn('Unrecognized message type:', type);
   }
 };
 
-ws.onclose = e => console.log('closing...');
+// Called when either the client or server closes the connection
+ws.onclose = () => {
+  console.log(`Closing WebSocket...`);
+  connected.innerText = 'NOT CONNECTED';
+
+  const info = document.createElement('p');
+  info.classList.add('connection');
+  info.innerText = `DISCONNECTED`;
+  box.appendChild(info);
+};
 
 form.onsubmit = e => {
   e.preventDefault();
 
   const text = input.value;
-  const message = JSON.stringify({ text });
-
-  ws.send(message);
+  ws.send(JSON.stringify({ text }));
 
   input.value = '';
 };

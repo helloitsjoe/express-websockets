@@ -10,32 +10,36 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// This serves index.html and any other assets it requires from the current directory.
+// This serves index.html and other assets from the current directory.
 app.use(express.static(__dirname));
 
-// Keep track of connected clients
-const clients = new Map();
+// Keep track of connected clients in order to broadcast to all connections
+const clients = [];
 let uniqueId = 0;
 
-// Listen for clients to connect. The `ws` argument
-// in the callback is the connected client.
+// Listen for clients to connect. The `ws` argument is the connected client.
 wss.on('connection', ws => {
-  clients.set(ws, uniqueId++);
-  ws.send(JSON.stringify({ type: 'connected' }));
+  // This is a simple way to assign a unique id to keep track of each client.
+  ws.clientId = uniqueId++;
+  clients.push(ws);
+
+  // We could send simple string messages, but sending stringified objects
+  // makes it easy to send different types of messages and data payloads.
+  ws.send(JSON.stringify({ type: 'connection' }));
 
   // Listen for messages from connected clients
   ws.on('message', message => {
     const { text } = JSON.parse(message);
-    const clientId = clients.get(ws);
 
-    // Broadcast to all clients
-    for (const client of clients.keys()) {
-      // This will broadcast to ALL connected clients, including sender
+    const { clientId } = clients.find(c => c === ws);
+
+    // Broadcast to all clients, including clientId of the sender.
+    for (const client of clients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: 'message',
-            self: client === ws,
+            isSelf: client === ws,
             clientId,
             text,
           })
@@ -43,12 +47,6 @@ wss.on('connection', ws => {
       }
     }
   });
-
-  // Heartbeat isn't necessary, just proves that server can push data to clients
-  setInterval(() => {
-    const time = new Date().toLocaleTimeString();
-    ws.send(JSON.stringify({ type: 'heartbeat', text: `Heartbeat ${time}` }));
-  }, 1000);
 });
 
 server.listen(3000, () => {
