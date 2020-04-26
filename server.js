@@ -13,15 +13,13 @@ const wss = new WebSocket.Server({ server });
 // This serves index.html and other assets from the current directory.
 app.use(express.static(__dirname));
 
-// Keep track of connected clients in order to broadcast to all connections
-const clients = [];
 let uniqueId = 0;
 
 // Listen for clients to connect. The `ws` argument is the connected client.
 wss.on('connection', ws => {
   // This is a simple way to assign a unique id to keep track of each client.
+  // We mutate the `ws` object so that all clients will know who the sender is.
   ws.clientId = uniqueId++;
-  clients.push(ws);
 
   // We could send simple string messages, but sending stringified objects
   // makes it easy to send different types of messages and data payloads.
@@ -31,16 +29,14 @@ wss.on('connection', ws => {
   ws.on('message', message => {
     const { text } = JSON.parse(message);
 
-    const { clientId } = clients.find(c => c === ws);
-
-    // Broadcast to all clients, including clientId of the sender.
-    for (const client of clients) {
+    // wss.clients is a Set() of all connected clients.
+    for (const client of wss.clients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: 'message',
             isSelf: client === ws,
-            clientId,
+            clientId: ws.clientId,
             text,
           })
         );
