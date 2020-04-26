@@ -67,6 +67,11 @@ form.onsubmit = e => {
   e.preventDefault();
 
   const text = input.value;
+
+  if (!text) {
+    return;
+  }
+
   ws.send(JSON.stringify({ text }));
 
   input.value = '';
