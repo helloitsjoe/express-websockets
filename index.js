@@ -10,7 +10,7 @@ const connected = document.getElementById('connected');
 const closeButton = document.getElementById('close-button');
 
 const ws = new WebSocket('ws://localhost:3000');
-let myId = null;
+// let myId = null;
 
 ws.onopen = e => {
   closeButton.disabled = false;
@@ -42,7 +42,7 @@ ws.onmessage = message => {
     }
     case 'connected': {
       connected.innerText = 'CONNECTED!';
-      myId = clientId;
+      // myId = clientId;
       break;
     }
     default:
@@ -56,7 +56,7 @@ form.onsubmit = e => {
   e.preventDefault();
 
   const text = input.value;
-  const message = JSON.stringify({ text, clientId: myid });
+  const message = JSON.stringify({ text });
 
   ws.send(message);
 

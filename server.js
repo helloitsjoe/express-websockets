@@ -14,22 +14,22 @@ const wss = new WebSocket.Server({ server });
 app.use(express.static(__dirname));
 
 // Keep track of connected clients
-const clients = {};
+const clients = new Map();
 let uniqueId = 0;
 
 // Listen for clients to connect. The `ws` argument
 // in the callback is the connected client.
 wss.on('connection', ws => {
-  const connectionId = uniqueId++;
-  clients[connectionId] = ws;
-  ws.send(JSON.stringify({ type: 'connected', clientId: connectionId }));
+  clients.set(ws, uniqueId++);
+  ws.send(JSON.stringify({ type: 'connected' }));
 
   // Listen for messages from connected clients
   ws.on('message', message => {
-    const { text, clientId } = JSON.parse(message);
+    const { text } = JSON.parse(message);
+    const clientId = clients.get(ws);
 
     // Broadcast to all clients
-    Object.values(clients).forEach(client => {
+    for (const client of clients.keys()) {
       // This will broadcast to ALL connected clients, including sender
       if (client.readyState === WebSocket.OPEN) {
         client.send(
@@ -41,7 +41,7 @@ wss.on('connection', ws => {
           })
         );
       }
-    });
+    }
   });
 
   // Heartbeat isn't necessary, just proves that server can push data to clients
