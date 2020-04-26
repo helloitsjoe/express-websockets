@@ -1,8 +1,23 @@
+body,
+html,
+button,
+input {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
 .box {
   width: 20em;
   height: 40em;
   border: 1px solid cornflowerblue;
   padding: 10px;
+}
+
+.info {
+  margin: 0 10px;
+  font-size: 60%;
+  /* font-variant: small-caps; */
+  color: #888;
+  text-align: right;
 }
 
 .bubble {
@@ -18,7 +33,7 @@
 }
 
 .them {
-  background-color: #ccc;
+  background-color: #ddd;
   text-align: left;
   color: black;
 }

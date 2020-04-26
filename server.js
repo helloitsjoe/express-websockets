@@ -13,27 +13,33 @@ const wss = new WebSocket.Server({ server });
 // This serves index.html and any other assets it requires from the current directory.
 app.use(express.static(__dirname));
 
+// Keep track of connected clients
+const clients = {};
+let uniqueId = 0;
+
 // Listen for clients to connect. The `ws` argument
 // in the callback is the connected client.
 wss.on('connection', ws => {
-  ws.send(JSON.stringify({ type: 'message', text: 'connected!' }));
+  const connectionId = uniqueId++;
+  clients[connectionId] = ws;
+  ws.send(JSON.stringify({ type: 'connected', clientId: connectionId }));
 
   // Listen for messages from connected clients
   ws.on('message', message => {
-    console.log('Received a message:', message);
+    const { text, clientId } = JSON.parse(message);
 
     // Broadcast to all clients
-    wss.clients.forEach(client => {
-      // This will broadcast only to clients OTHER than the sender
-      // if (client !== ws && client.readyState === WebSocket.OPEN) {
-      //   const { text } = JSON.parse(message);
-      //   client.send(JSON.stringify({ type: 'message', text }));
-      // }
-
+    Object.values(clients).forEach(client => {
       // This will broadcast to ALL connected clients, including sender
       if (client.readyState === WebSocket.OPEN) {
-        const { text } = JSON.parse(message);
-        client.send(JSON.stringify({ type: 'message', text, self: client === ws }));
+        client.send(
+          JSON.stringify({
+            type: 'message',
+            self: client === ws,
+            clientId,
+            text,
+          })
+        );
       }
     });
   });
