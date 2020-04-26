@@ -16,12 +16,12 @@ ws.onmessage = message => {
   const json = JSON.parse(message.data);
 
   if (json.type === 'heartbeat') {
-    // heartbeat.innerText = json.text;
+    heartbeat.innerText = json.text;
     return;
   }
 
   const bubble = document.createElement('div');
-  bubble.classList.add('bubble', 'them');
+  bubble.classList.add('bubble', json.self ? 'us' : 'them');
   bubble.innerText = json.text;
   box.appendChild(bubble);
 };
@@ -33,11 +33,6 @@ form.onsubmit = e => {
 
   const text = input.value;
   const message = JSON.stringify({ text });
-
-  const usBubble = document.createElement('div');
-  usBubble.classList.add('bubble', 'us');
-  usBubble.innerText = text;
-  box.appendChild(usBubble);
 
   ws.send(message);
 
