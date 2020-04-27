@@ -1,4 +1,4 @@
-// This is just using vanilla JS, if you're building a real app
+// This is vanilla JS, if you're building a real app
 // you would probably want to use a framework (e.g. React).
 
 const box = document.getElementById('box');
@@ -26,8 +26,7 @@ ws.onopen = e => {
 ws.onmessage = message => {
   const { type, isSelf, text, clientId } = JSON.parse(message.data);
 
-  // This is one way to handle different types of messages. Socket.io
-  // provides an abstraction that allows you to avoid this.
+  // A switch statement is one way to handle different types of messages.
   switch (type) {
     case 'message': {
       const bubble = document.createElement('div');
